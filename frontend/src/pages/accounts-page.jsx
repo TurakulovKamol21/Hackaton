@@ -21,7 +21,9 @@ import {
   Wallet
 } from "@mui/icons-material";
 import { EmptyState, PageHeader, SectionCard } from "../components/ui-kit";
+import { VoiceField, VoiceFormNotice } from "../components/voice-input";
 import { useFinance } from "../finance/finance-context";
+import { useI18n } from "../i18n/i18n-context";
 import { accountTypeLabel, formatMoney } from "../lib/finance-utils";
 
 const accountTypes = ["BANK_ACCOUNT", "BANK_CARD", "CASH", "SAVINGS", "E_WALLET"];
@@ -36,6 +38,7 @@ const emptyForm = {
 
 export default function AccountsPage() {
   const theme = useTheme();
+  const { t } = useI18n();
   const { accounts, busyAction, createAccount, updateAccount, deleteAccount } = useFinance();
   const [open, setOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
@@ -87,19 +90,19 @@ export default function AccountsPage() {
   return (
     <Box>
       <PageHeader
-        eyebrow="Accounts"
-        title="Hisoblar va kartalar"
-        subtitle="Kartalar, bank hisobraqamlari, naqd pul va elektron hamyonlarni app-card formatida boshqaring."
+        eyebrow={t("Accounts")}
+        title={t("Hisoblar va kartalar")}
+        subtitle={t("Kartalar, bank hisobraqamlari, naqd pul va elektron hamyonlarni app-card formatida boshqaring.")}
         action={
           <Button variant="contained" startIcon={<Add />} onClick={handleCreate}>
-            Hisob qo'shish
+            {t("Hisob qo'shish")}
           </Button>
         }
       />
 
       <SectionCard
-        title="Portfolio"
-        subtitle="Joriy balans backenddagi barcha income, expense va transferlardan hosil qilinadi."
+        title={t("Portfolio")}
+        subtitle={t("Joriy balans backenddagi barcha income, expense va transferlardan hosil qilinadi.")}
       >
         {accounts.length ? (
           <Box
@@ -149,7 +152,7 @@ export default function AccountsPage() {
                   {account.name}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  {accountTypeLabel(account.type)}
+                  {accountTypeLabel(account.type, t)}
                 </Typography>
 
                 <Typography variant="h4" sx={{ mt: 3 }}>
@@ -159,7 +162,7 @@ export default function AccountsPage() {
                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 2 }}>
                   <Chip label={account.currency} color="primary" variant="outlined" />
                   <Chip
-                    label={`Start: ${formatMoney(account.initialBalance, account.currency)}`}
+                    label={t("Start: {{value}}", { value: formatMoney(account.initialBalance, account.currency) })}
                     variant="outlined"
                   />
                 </Stack>
@@ -168,62 +171,71 @@ export default function AccountsPage() {
           </Box>
         ) : (
           <EmptyState
-            title="Hisoblar hali kiritilmagan"
-            message="MVP demoda account qo‘shilgach, u avtomatik ravishda boshqa sahifalardagi selectlarda ham paydo bo‘ladi."
+            title={t("Hisoblar hali kiritilmagan")}
+            message={t("MVP demoda account qo‘shilgach, u avtomatik ravishda boshqa sahifalardagi selectlarda ham paydo bo‘ladi.")}
           />
         )}
       </SectionCard>
 
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
         <Box component="form" onSubmit={handleSubmit}>
-          <DialogTitle>{editingAccount ? "Hisobni tahrirlash" : "Yangi hisob qo'shish"}</DialogTitle>
+          <DialogTitle>{editingAccount ? t("Hisobni tahrirlash") : t("Yangi hisob qo'shish")}</DialogTitle>
           <DialogContent>
+            <VoiceFormNotice />
             <Stack spacing={2} sx={{ pt: 1 }}>
-              <TextField
-                label="Nomi"
+              <VoiceField
+                label={t("Nomi")}
                 value={formData.name}
-                onChange={(event) => setFormData((previous) => ({ ...previous, name: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, name: nextValue }))}
               />
-              <TextField
+              <VoiceField
                 select
-                label="Turi"
+                label={t("Turi")}
                 value={formData.type}
-                onChange={(event) => setFormData((previous) => ({ ...previous, type: event.target.value }))}
+                voiceType="select"
+                voiceOptions={accountTypes.map((type) => ({
+                  value: type,
+                  label: accountTypeLabel(type, t)
+                }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, type: nextValue }))}
               >
                 {accountTypes.map((type) => (
                   <MenuItem key={type} value={type}>
-                    {accountTypeLabel(type)}
+                    {accountTypeLabel(type, t)}
                   </MenuItem>
                 ))}
-              </TextField>
-              <TextField
+              </VoiceField>
+              <VoiceField
                 select
-                label="Valyuta"
+                label={t("Valyuta")}
                 value={formData.currency}
-                helperText={editingAccount ? "Agar account tarixga ega bo‘lsa, currency o‘zgarishi bloklanadi." : "Boshlang‘ich valyuta tanlang."}
-                onChange={(event) => setFormData((previous) => ({ ...previous, currency: event.target.value }))}
+                voiceType="select"
+                voiceOptions={currencies.map((currency) => ({ value: currency, label: currency }))}
+                helperText={editingAccount ? t("Agar account tarixga ega bo‘lsa, currency o‘zgarishi bloklanadi.") : t("Boshlang‘ich valyuta tanlang.")}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, currency: nextValue }))}
               >
                 {currencies.map((currency) => (
                   <MenuItem key={currency} value={currency}>
                     {currency}
                   </MenuItem>
                 ))}
-              </TextField>
-              <TextField
-                label="Boshlang'ich balans"
+              </VoiceField>
+              <VoiceField
+                label={t("Boshlang'ich balans")}
                 type="number"
+                voiceType="number"
                 value={formData.initialBalance}
                 helperText={editingAccount && editingAccount.currentBalance !== editingAccount.initialBalance
-                  ? `Joriy balans: ${formatMoney(editingAccount.currentBalance, editingAccount.currency)}`
-                  : "Joriy balans tranzaksiya va transferlar bilan hisoblanadi."}
-                onChange={(event) => setFormData((previous) => ({ ...previous, initialBalance: event.target.value }))}
+                  ? t("Joriy balans: {{value}}", { value: formatMoney(editingAccount.currentBalance, editingAccount.currency) })
+                  : t("Joriy balans tranzaksiya va transferlar bilan hisoblanadi.")}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, initialBalance: nextValue }))}
               />
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={handleClose}>Bekor qilish</Button>
+            <Button onClick={handleClose}>{t("Bekor qilish")}</Button>
             <Button type="submit" variant="contained" disabled={Boolean(busyAction)}>
-              {editingAccount ? "Saqlash" : "Qo'shish"}
+              {editingAccount ? t("Saqlash") : t("Qo'shish")}
             </Button>
           </DialogActions>
         </Box>

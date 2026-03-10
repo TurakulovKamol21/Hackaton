@@ -6,21 +6,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.startup.finance.dto.FinanceDtos.DebtResponse;
 import uz.startup.finance.dto.FinanceDtos.UpsertDebtRequest;
-import uz.startup.finance.model.DebtRecord;
+import uz.startup.finance.domain.entity.DebtRecord;
 import uz.startup.finance.repo.DebtRecordRepository;
+import uz.startup.finance.security.CurrentUserService;
 
 @Service
 public class DebtService {
 
     private final DebtRecordRepository debtRecordRepository;
+    private final CurrentUserService currentUserService;
 
-    public DebtService(DebtRecordRepository debtRecordRepository) {
+    public DebtService(DebtRecordRepository debtRecordRepository, CurrentUserService currentUserService) {
         this.debtRecordRepository = debtRecordRepository;
+        this.currentUserService = currentUserService;
     }
 
     @Transactional(readOnly = true)
     public List<DebtResponse> listDebts() {
-        return debtRecordRepository.findAllByOrderByStatusAscOpenedOnDescIdDesc().stream()
+        return debtRecordRepository.findAllByOwnerIdOrderByStatusAscOpenedOnDescIdDesc(currentUserService.currentUserId()).stream()
                 .map(FinanceMapper::toDebtResponse)
                 .toList();
     }
@@ -28,6 +31,7 @@ public class DebtService {
     @Transactional
     public DebtResponse createDebt(UpsertDebtRequest request) {
         DebtRecord debtRecord = new DebtRecord();
+        debtRecord.setOwner(currentUserService.currentUser());
         debtRecord.setType(request.type());
         debtRecord.setCounterparty(request.counterparty().trim());
         debtRecord.setAmount(request.amount());
@@ -42,7 +46,7 @@ public class DebtService {
 
     @Transactional
     public DebtResponse updateDebt(Long id, UpsertDebtRequest request) {
-        DebtRecord debtRecord = debtRecordRepository.findById(id)
+        DebtRecord debtRecord = debtRecordRepository.findByIdAndOwnerId(id, currentUserService.currentUserId())
                 .orElseThrow(() -> new NotFoundException("Debt record not found: " + id));
         debtRecord.setType(request.type());
         debtRecord.setCounterparty(request.counterparty().trim());
@@ -57,7 +61,7 @@ public class DebtService {
 
     @Transactional
     public void deleteDebt(Long id) {
-        DebtRecord debtRecord = debtRecordRepository.findById(id)
+        DebtRecord debtRecord = debtRecordRepository.findByIdAndOwnerId(id, currentUserService.currentUserId())
                 .orElseThrow(() -> new NotFoundException("Debt record not found: " + id));
         debtRecordRepository.delete(debtRecord);
     }

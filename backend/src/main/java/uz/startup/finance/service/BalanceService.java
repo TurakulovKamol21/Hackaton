@@ -8,13 +8,14 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.startup.finance.dto.FinanceDtos.CurrencyTotal;
-import uz.startup.finance.model.Account;
-import uz.startup.finance.model.Entry;
-import uz.startup.finance.model.TransactionType;
-import uz.startup.finance.model.Transfer;
+import uz.startup.finance.domain.entity.Account;
+import uz.startup.finance.domain.entity.Entry;
+import uz.startup.finance.domain.enums.TransactionType;
+import uz.startup.finance.domain.entity.Transfer;
 import uz.startup.finance.repo.AccountRepository;
 import uz.startup.finance.repo.EntryRepository;
 import uz.startup.finance.repo.TransferRepository;
+import uz.startup.finance.security.CurrentUserService;
 
 @Service
 public class BalanceService {
@@ -22,22 +23,26 @@ public class BalanceService {
     private final AccountRepository accountRepository;
     private final EntryRepository entryRepository;
     private final TransferRepository transferRepository;
+    private final CurrentUserService currentUserService;
 
     public BalanceService(
             AccountRepository accountRepository,
             EntryRepository entryRepository,
-            TransferRepository transferRepository
+            TransferRepository transferRepository,
+            CurrentUserService currentUserService
     ) {
         this.accountRepository = accountRepository;
         this.entryRepository = entryRepository;
         this.transferRepository = transferRepository;
+        this.currentUserService = currentUserService;
     }
 
     @Transactional(readOnly = true)
     public Map<Long, BigDecimal> currentBalances() {
-        List<Account> accounts = accountRepository.findAll();
-        List<Entry> entries = entryRepository.findAll();
-        List<Transfer> transfers = transferRepository.findAll();
+        Long ownerId = currentUserService.currentUserId();
+        List<Account> accounts = accountRepository.findAllByOwnerIdOrderByNameAsc(ownerId);
+        List<Entry> entries = entryRepository.findAllByOwnerIdOrderByTransactionDateDescIdDesc(ownerId);
+        List<Transfer> transfers = transferRepository.findAllByOwnerIdOrderByTransferDateDescIdDesc(ownerId);
 
         Map<Long, BigDecimal> balances = new HashMap<>();
         accounts.forEach(account -> balances.put(account.getId(), normalize(account.getInitialBalance())));
@@ -65,8 +70,9 @@ public class BalanceService {
 
     @Transactional(readOnly = true)
     public List<CurrencyTotal> totalBalancesByCurrency() {
+        Long ownerId = currentUserService.currentUserId();
         Map<Long, BigDecimal> balances = currentBalances();
-        return accountRepository.findAll().stream()
+        return accountRepository.findAllByOwnerIdOrderByNameAsc(ownerId).stream()
                 .collect(HashMap<String, BigDecimal>::new, (acc, account) -> acc.merge(
                         account.getCurrency(),
                         balances.getOrDefault(account.getId(), BigDecimal.ZERO),

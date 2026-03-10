@@ -22,18 +22,20 @@ import uz.startup.finance.dto.FinanceDtos.CurrencyTotal;
 import uz.startup.finance.dto.FinanceDtos.DashboardResponse;
 import uz.startup.finance.dto.FinanceDtos.DebtSummary;
 import uz.startup.finance.dto.FinanceDtos.PeriodStat;
-import uz.startup.finance.model.Budget;
-import uz.startup.finance.model.BudgetType;
-import uz.startup.finance.model.DebtRecord;
-import uz.startup.finance.model.DebtStatus;
-import uz.startup.finance.model.DebtType;
-import uz.startup.finance.model.Entry;
-import uz.startup.finance.model.TransactionType;
-import uz.startup.finance.model.Transfer;
+import uz.startup.finance.domain.entity.Budget;
+import uz.startup.finance.domain.entity.DebtRecord;
+import uz.startup.finance.domain.entity.Entry;
+import uz.startup.finance.domain.entity.Transfer;
+import uz.startup.finance.domain.enums.BudgetType;
+import uz.startup.finance.domain.enums.DebtStatus;
+import uz.startup.finance.domain.enums.DebtType;
+import uz.startup.finance.domain.enums.TransactionType;
+import uz.startup.finance.domain.enums.TrendGranularity;
 import uz.startup.finance.repo.BudgetRepository;
 import uz.startup.finance.repo.DebtRecordRepository;
 import uz.startup.finance.repo.EntryRepository;
 import uz.startup.finance.repo.TransferRepository;
+import uz.startup.finance.security.CurrentUserService;
 
 @Service
 public class DashboardService {
@@ -46,6 +48,8 @@ public class DashboardService {
     private final TransferRepository transferRepository;
     private final BudgetRepository budgetRepository;
     private final DebtRecordRepository debtRecordRepository;
+    private final DashboardInsightService dashboardInsightService;
+    private final CurrentUserService currentUserService;
 
     public DashboardService(
             AccountService accountService,
@@ -53,7 +57,9 @@ public class DashboardService {
             EntryRepository entryRepository,
             TransferRepository transferRepository,
             BudgetRepository budgetRepository,
-            DebtRecordRepository debtRecordRepository
+            DebtRecordRepository debtRecordRepository,
+            DashboardInsightService dashboardInsightService,
+            CurrentUserService currentUserService
     ) {
         this.accountService = accountService;
         this.balanceService = balanceService;
@@ -61,33 +67,41 @@ public class DashboardService {
         this.transferRepository = transferRepository;
         this.budgetRepository = budgetRepository;
         this.debtRecordRepository = debtRecordRepository;
+        this.dashboardInsightService = dashboardInsightService;
+        this.currentUserService = currentUserService;
     }
 
     @Transactional(readOnly = true)
     public DashboardResponse buildDashboard(String monthValue, String granularityValue) {
         YearMonth month = monthValue == null || monthValue.isBlank() ? YearMonth.now() : YearMonth.parse(monthValue);
         TrendGranularity granularity = TrendGranularity.from(granularityValue);
+        Long ownerId = currentUserService.currentUserId();
 
-        List<Entry> allEntries = entryRepository.findAll();
+        List<Entry> allEntries = entryRepository.findAllByOwnerIdOrderByTransactionDateDescIdDesc(ownerId);
         List<Entry> monthEntries = allEntries.stream()
                 .filter(entry -> YearMonth.from(entry.getTransactionDate()).equals(month))
                 .toList();
         List<Transfer> monthTransfers = transferRepository
-                .findByTransferDateBetweenOrderByTransferDateDescIdDesc(month.atDay(1), month.atEndOfMonth());
-        List<Budget> budgets = budgetRepository.findByMonthOrderByTypeAscIdAsc(month.toString());
-        List<DebtRecord> debts = debtRecordRepository.findAllByOrderByStatusAscOpenedOnDescIdDesc();
+                .findByOwnerIdAndTransferDateBetweenOrderByTransferDateDescIdDesc(ownerId, month.atDay(1), month.atEndOfMonth());
+        List<Budget> budgets = budgetRepository.findByOwnerIdAndMonthOrderByTypeAscIdAsc(ownerId, month.toString());
+        List<DebtRecord> debts = debtRecordRepository.findAllByOwnerIdOrderByStatusAscOpenedOnDescIdDesc(ownerId);
+        List<CurrencyTotal> incomeTotals = sumByCurrency(monthEntries, TransactionType.INCOME);
+        List<CurrencyTotal> expenseTotals = sumByCurrency(monthEntries, TransactionType.EXPENSE);
+        List<BudgetComparison> budgetComparisons = buildBudgetComparisons(budgets, monthEntries);
+        List<DebtSummary> debtSummaries = buildDebtSummaries(debts);
 
         return new DashboardResponse(
                 month.toString(),
                 accountService.listAccounts(),
                 balanceService.totalBalancesByCurrency(),
-                sumByCurrency(monthEntries, TransactionType.INCOME),
-                sumByCurrency(monthEntries, TransactionType.EXPENSE),
-                buildBudgetComparisons(budgets, monthEntries),
+                incomeTotals,
+                expenseTotals,
+                budgetComparisons,
                 buildCategoryStats(monthEntries),
                 buildTrend(allEntries, month, granularity),
                 buildCalendarItems(monthEntries, monthTransfers),
-                buildDebtSummaries(debts)
+                debtSummaries,
+                dashboardInsightService.buildInsights(month, incomeTotals, expenseTotals, budgetComparisons, debts)
         );
     }
 
@@ -278,25 +292,6 @@ public class DashboardService {
                 return byOrder;
             }
             return this.currency.compareToIgnoreCase(other.currency);
-        }
-    }
-
-    private enum TrendGranularity {
-        DAILY,
-        WEEKLY,
-        MONTHLY,
-        YEARLY;
-
-        private static TrendGranularity from(String value) {
-            if (value == null || value.isBlank()) {
-                return MONTHLY;
-            }
-            return switch (value.trim().toUpperCase(Locale.ROOT)) {
-                case "DAILY" -> DAILY;
-                case "WEEKLY" -> WEEKLY;
-                case "YEARLY" -> YEARLY;
-                default -> MONTHLY;
-            };
         }
     }
 

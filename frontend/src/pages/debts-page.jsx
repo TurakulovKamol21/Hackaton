@@ -27,10 +27,11 @@ import {
   CheckCircleOutline,
   DeleteOutline
 } from "@mui/icons-material";
-import { format } from "date-fns";
 import { CurrencyStack, EmptyState, PageHeader, SectionCard } from "../components/ui-kit";
+import { VoiceField, VoiceFormNotice } from "../components/voice-input";
 import { useFinance } from "../finance/finance-context";
-import { formatMoney } from "../lib/finance-utils";
+import { useI18n } from "../i18n/i18n-context";
+import { formatDateValue, formatMoney } from "../lib/finance-utils";
 
 const currencies = ["UZS", "USD", "EUR", "RUB"];
 const emptyDebt = {
@@ -55,6 +56,7 @@ function summarizeByCurrency(items, key) {
 
 export default function DebtsPage() {
   const theme = useTheme();
+  const { t } = useI18n();
   const { debts, busyAction, createDebt, updateDebt, deleteDebt } = useFinance();
   const [tab, setTab] = useState("DEBT");
   const [open, setOpen] = useState(false);
@@ -103,46 +105,46 @@ export default function DebtsPage() {
   return (
     <Box>
       <PageHeader
-        eyebrow="Liabilities"
-        title="Qarzlar va haqdorliklar"
-        subtitle="Kimga qarzdorligingizni va kim sizga qaytarishi kerakligini bir xil workflow bilan kuzating."
+        eyebrow={t("Liabilities")}
+        title={t("Qarzlar va haqdorliklar")}
+        subtitle={t("Kimga qarzdorligingizni va kim sizga qaytarishi kerakligini bir xil workflow bilan kuzating.")}
         action={
           <Stack direction="row" spacing={1}>
             <Button color="warning" variant="contained" startIcon={<Add />} onClick={() => handleOpen("DEBT")}>
-              Qarz qo'shish
+              {t("Qarz qo'shish")}
             </Button>
             <Button color="success" variant="contained" startIcon={<Add />} onClick={() => handleOpen("RECEIVABLE")}>
-              Haqdorlik qo'shish
+              {t("Haqdorlik qo'shish")}
             </Button>
           </Stack>
         }
       />
 
       <SectionCard
-        title="Ochiq pozitsiyalar"
-        subtitle={tab === "DEBT" ? "Siz qaytarishingiz kerak bo'lgan yozuvlar." : "Sizga qaytishi kerak bo'lgan yozuvlar."}
+        title={t("Ochiq pozitsiyalar")}
+        subtitle={tab === "DEBT" ? t("Siz qaytarishingiz kerak bo'lgan yozuvlar.") : t("Sizga qaytishi kerak bo'lgan yozuvlar.")}
         action={
           <Tabs value={tab} onChange={(_, value) => setTab(value)}>
-            <Tab value="DEBT" label="Mening qarzim" />
-            <Tab value="RECEIVABLE" label="Menga qaytadi" />
+            <Tab value="DEBT" label={t("Mening qarzim")} />
+            <Tab value="RECEIVABLE" label={t("Menga qaytishi kerak")} />
           </Tabs>
         }
       >
         <Stack spacing={2.5}>
-          <CurrencyStack items={currencyTotals} tone={tab === "DEBT" ? "error" : "success"} emptyLabel="Ochiq yozuv yo'q" />
+          <CurrencyStack items={currencyTotals} tone={tab === "DEBT" ? "error" : "success"} emptyLabel={t("Ochiq yozuv yo'q")} />
 
           {visibleDebts.length ? (
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Kontragent</TableCell>
-                    <TableCell>Summa</TableCell>
-                    <TableCell>Ochilgan sana</TableCell>
-                    <TableCell>Muddat</TableCell>
-                    <TableCell>Holat</TableCell>
-                    <TableCell>Izoh</TableCell>
-                    <TableCell align="right">Amallar</TableCell>
+                    <TableCell>{t("Kontragent")}</TableCell>
+                    <TableCell>{t("Summa")}</TableCell>
+                    <TableCell>{t("Ochilgan sana")}</TableCell>
+                    <TableCell>{t("Muddat")}</TableCell>
+                    <TableCell>{t("Holat")}</TableCell>
+                    <TableCell>{t("Izoh")}</TableCell>
+                    <TableCell align="right">{t("Amallar")}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -163,12 +165,12 @@ export default function DebtsPage() {
                         </Typography>
                       </TableCell>
                       <TableCell>{formatMoney(item.amount, item.currency)}</TableCell>
-                      <TableCell>{format(new Date(item.openedOn), "dd.MM.yyyy")}</TableCell>
-                      <TableCell>{item.dueDate ? format(new Date(item.dueDate), "dd.MM.yyyy") : "Belgilanmagan"}</TableCell>
+                      <TableCell>{formatDateValue(item.openedOn)}</TableCell>
+                      <TableCell>{item.dueDate ? formatDateValue(item.dueDate) : t("Belgilanmagan")}</TableCell>
                       <TableCell>
-                        <Chip label={item.status === "OPEN" ? "Ochiq" : "Yopilgan"} color={item.status === "OPEN" ? "warning" : "success"} />
+                        <Chip label={item.status === "OPEN" ? t("Ochiq") : t("Yopilgan")} color={item.status === "OPEN" ? "warning" : "success"} />
                       </TableCell>
-                      <TableCell>{item.note || "Izoh yo'q"}</TableCell>
+                      <TableCell>{item.note || t("Izoh yo'q")}</TableCell>
                       <TableCell align="right">
                         {item.status === "OPEN" ? (
                           <IconButton color="success" onClick={() => markClosed(item)}>
@@ -186,8 +188,8 @@ export default function DebtsPage() {
             </TableContainer>
           ) : (
             <EmptyState
-              title="Qarz yozuvlari yo'q"
-              message="Yuqoridagi tugmalar orqali yangi qarz yoki receivable qo‘shing. Status keyin shu yerda kuzatiladi."
+              title={t("Qarz yozuvlari yo'q")}
+              message={t("Yuqoridagi tugmalar orqali yangi qarz yoki receivable qo‘shing. Status keyin shu yerda kuzatiladi.")}
             />
           )}
         </Stack>
@@ -195,59 +197,66 @@ export default function DebtsPage() {
 
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
         <Box component="form" onSubmit={handleSubmit}>
-          <DialogTitle>{formData.type === "DEBT" ? "Yangi qarz" : "Yangi haqdorlik"}</DialogTitle>
+          <DialogTitle>{formData.type === "DEBT" ? t("Yangi qarz") : t("Yangi haqdorlik")}</DialogTitle>
           <DialogContent>
+            <VoiceFormNotice />
             <Stack spacing={2} sx={{ pt: 1 }}>
-              <TextField
-                label="Kontragent"
+              <VoiceField
+                label={t("Kontragent")}
                 value={formData.counterparty}
-                onChange={(event) => setFormData((previous) => ({ ...previous, counterparty: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, counterparty: nextValue }))}
               />
-              <TextField
-                label="Summa"
+              <VoiceField
+                label={t("Summa")}
                 type="number"
+                voiceType="number"
                 value={formData.amount}
-                onChange={(event) => setFormData((previous) => ({ ...previous, amount: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, amount: nextValue }))}
               />
-              <TextField
+              <VoiceField
                 select
-                label="Valyuta"
+                label={t("Valyuta")}
                 value={formData.currency}
-                onChange={(event) => setFormData((previous) => ({ ...previous, currency: event.target.value }))}
+                voiceType="select"
+                voiceOptions={currencies.map((currency) => ({ value: currency, label: currency }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, currency: nextValue }))}
               >
                 {currencies.map((currency) => (
                   <MenuItem key={currency} value={currency}>
                     {currency}
                   </MenuItem>
                 ))}
-              </TextField>
-              <TextField
+              </VoiceField>
+              <VoiceField
                 type="date"
-                label="Ochilgan sana"
+                label={t("Ochilgan sana")}
+                voiceType="date"
                 value={formData.openedOn}
-                onChange={(event) => setFormData((previous) => ({ ...previous, openedOn: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, openedOn: nextValue }))}
                 InputLabelProps={{ shrink: true }}
               />
-              <TextField
+              <VoiceField
                 type="date"
-                label="Qaytarish muddati"
+                label={t("Qaytarish muddati")}
+                voiceType="date"
                 value={formData.dueDate}
-                onChange={(event) => setFormData((previous) => ({ ...previous, dueDate: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, dueDate: nextValue }))}
                 InputLabelProps={{ shrink: true }}
               />
-              <TextField
-                label="Izoh"
+              <VoiceField
+                label={t("Izoh")}
                 multiline
                 minRows={3}
+                voiceAppend
                 value={formData.note}
-                onChange={(event) => setFormData((previous) => ({ ...previous, note: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, note: nextValue }))}
               />
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={handleClose}>Bekor qilish</Button>
+            <Button onClick={handleClose}>{t("Bekor qilish")}</Button>
             <Button type="submit" variant="contained" disabled={Boolean(busyAction)}>
-              Saqlash
+              {t("Saqlash")}
             </Button>
           </DialogActions>
         </Box>

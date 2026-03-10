@@ -16,8 +16,10 @@ import {
 } from "@mui/material";
 import { Add, DeleteOutline } from "@mui/icons-material";
 import { EmptyState, PageHeader, SectionCard } from "../components/ui-kit";
+import { VoiceField, VoiceFormNotice } from "../components/voice-input";
 import { useFinance } from "../finance/finance-context";
-import { formatMoney, percent } from "../lib/finance-utils";
+import { useI18n } from "../i18n/i18n-context";
+import { categoryLabel, formatMoney, percent } from "../lib/finance-utils";
 
 const budgetForm = {
   month: "",
@@ -29,6 +31,7 @@ const budgetForm = {
 
 export default function BudgetPage() {
   const theme = useTheme();
+  const { t } = useI18n();
   const { budgets, dashboard, selectedMonth, expenseCategories, busyAction, saveBudget, deleteBudget } = useFinance();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -77,16 +80,16 @@ export default function BudgetPage() {
   return (
     <Box>
       <PageHeader
-        eyebrow="Planning"
-        title="Byudjet va rejalashtirish"
-        subtitle="Income target va category-based expense limitlarni shu sahifada boshqaring."
+        eyebrow={t("Planning")}
+        title={t("Byudjet va rejalashtirish")}
+        subtitle={t("Income target va category-based expense limitlarni shu sahifada boshqaring.")}
         action={
           <Stack direction="row" spacing={1}>
             <Button color="warning" variant="contained" startIcon={<Add />} onClick={() => openDialog("EXPENSE_LIMIT")}>
-              Xarajat limiti
+              {t("Xarajat limiti")}
             </Button>
             <Button color="success" variant="contained" startIcon={<Add />} onClick={() => openDialog("INCOME_TARGET")}>
-              Daromad rejasi
+              {t("Daromad rejasi")}
             </Button>
           </Stack>
         }
@@ -99,7 +102,7 @@ export default function BudgetPage() {
           gap: 2
         }}
       >
-        <SectionCard title="Expense limitlar" subtitle="Kategoriya bo‘yicha oy ichidagi sarf limitlari.">
+        <SectionCard title={t("Expense limitlar")} subtitle={t("Kategoriya bo‘yicha oy ichidagi sarf limitlari.")}>
           {expenseBudgets.length ? (
             <Stack spacing={2}>
               {expenseBudgets.map((budget) => {
@@ -121,7 +124,7 @@ export default function BudgetPage() {
                     <Stack direction="row" justifyContent="space-between" spacing={2}>
                       <Box>
                         <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                          {budget.categoryName}
+                          {categoryLabel(budget.categoryName, t)}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           {budget.month}
@@ -135,7 +138,7 @@ export default function BudgetPage() {
                       {formatMoney(comparison?.actual || 0, budget.currency)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                      Limit: {formatMoney(budget.amount, budget.currency)}
+                      {t("Limit: {{value}}", { value: formatMoney(budget.amount, budget.currency) })}
                     </Typography>
                     <LinearProgress
                       value={progress}
@@ -145,8 +148,8 @@ export default function BudgetPage() {
                     />
                     <Typography variant="caption" color={over ? "error.main" : "text.secondary"} sx={{ mt: 1, display: "block" }}>
                       {over
-                        ? `Reja oshdi: ${formatMoney(comparison?.delta || 0, budget.currency)}`
-                        : `Zaxira: ${formatMoney(Math.max(Number(budget.amount) - Number(comparison?.actual || 0), 0), budget.currency)}`}
+                        ? t("Reja oshdi: {{value}}", { value: formatMoney(comparison?.delta || 0, budget.currency) })
+                        : t("Zaxira: {{value}}", { value: formatMoney(Math.max(Number(budget.amount) - Number(comparison?.actual || 0), 0), budget.currency) })}
                     </Typography>
                   </Box>
                 );
@@ -154,13 +157,13 @@ export default function BudgetPage() {
             </Stack>
           ) : (
             <EmptyState
-              title="Expense limit yo'q"
-              message="Kategoriya bo‘yicha sarf limiti qo‘shilsa, bu yerda progress kartalari chiqadi."
+              title={t("Expense limit yo'q")}
+              message={t("Kategoriya bo‘yicha sarf limiti qo‘shilsa, bu yerda progress kartalari chiqadi.")}
             />
           )}
         </SectionCard>
 
-        <SectionCard title="Income targetlar" subtitle="Oy bo‘yicha daromad rejalari va bajarilish holati.">
+        <SectionCard title={t("Income targetlar")} subtitle={t("Oy bo‘yicha daromad rejalari va bajarilish holati.")}>
           {incomeBudgets.length ? (
             <Stack spacing={2}>
               {incomeBudgets.map((budget) => {
@@ -181,7 +184,7 @@ export default function BudgetPage() {
                     <Stack direction="row" justifyContent="space-between" spacing={2}>
                       <Box>
                         <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                          Monthly income target
+                          {t("Monthly income target")}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           {budget.month}
@@ -195,7 +198,7 @@ export default function BudgetPage() {
                       {formatMoney(comparison?.actual || 0, budget.currency)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                      Target: {formatMoney(budget.amount, budget.currency)}
+                      {t("Target: {{value}}", { value: formatMoney(budget.amount, budget.currency) })}
                     </Typography>
                     <LinearProgress
                       value={progress}
@@ -204,7 +207,7 @@ export default function BudgetPage() {
                       sx={{ mt: 1.5, height: 8, borderRadius: 999 }}
                     />
                     <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-                      Delta: {formatMoney(comparison?.delta || 0, budget.currency)}
+                      {t("Delta: {{value}}", { value: formatMoney(comparison?.delta || 0, budget.currency) })}
                     </Typography>
                   </Box>
                 );
@@ -212,8 +215,8 @@ export default function BudgetPage() {
             </Stack>
           ) : (
             <EmptyState
-              title="Income target belgilanmagan"
-              message="Bu oy bo‘yicha umumiy daromad maqsadini kiritsangiz, backend reja va faktni avtomatik solishtiradi."
+              title={t("Income target belgilanmagan")}
+              message={t("Bu oy bo‘yicha umumiy daromad maqsadini kiritsangiz, backend reja va faktni avtomatik solishtiradi.")}
             />
           )}
         </SectionCard>
@@ -221,63 +224,78 @@ export default function BudgetPage() {
 
       <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="sm">
         <Box component="form" onSubmit={handleSubmit}>
-          <DialogTitle>{formData.type === "INCOME_TARGET" ? "Daromad rejasi" : "Xarajat limiti"}</DialogTitle>
+          <DialogTitle>{formData.type === "INCOME_TARGET" ? t("Daromad rejasi") : t("Xarajat limiti")}</DialogTitle>
           <DialogContent>
+            <VoiceFormNotice />
             <Stack spacing={2} sx={{ pt: 1 }}>
-              <TextField
+              <VoiceField
                 type="month"
-                label="Oy"
+                label={t("Oy")}
+                voiceType="month"
                 value={formData.month}
-                onChange={(event) => setFormData((previous) => ({ ...previous, month: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, month: nextValue }))}
                 InputLabelProps={{ shrink: true }}
               />
-              <TextField
+              <VoiceField
                 select
-                label="Turi"
+                label={t("Turi")}
                 value={formData.type}
-                onChange={(event) => setFormData((previous) => ({ ...previous, type: event.target.value }))}
+                voiceType="select"
+                voiceOptions={[
+                  { value: "EXPENSE_LIMIT", label: t("Xarajat limiti") },
+                  { value: "INCOME_TARGET", label: t("Daromad rejasi") }
+                ]}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, type: nextValue }))}
               >
-                <MenuItem value="EXPENSE_LIMIT">Xarajat limiti</MenuItem>
-                <MenuItem value="INCOME_TARGET">Daromad rejasi</MenuItem>
-              </TextField>
-              <TextField
-                label="Summa"
+                <MenuItem value="EXPENSE_LIMIT">{t("Xarajat limiti")}</MenuItem>
+                <MenuItem value="INCOME_TARGET">{t("Daromad rejasi")}</MenuItem>
+              </VoiceField>
+              <VoiceField
+                label={t("Summa")}
                 type="number"
+                voiceType="number"
                 value={formData.amount}
-                onChange={(event) => setFormData((previous) => ({ ...previous, amount: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, amount: nextValue }))}
               />
-              <TextField
+              <VoiceField
                 select
-                label="Valyuta"
+                label={t("Valyuta")}
                 value={formData.currency}
-                onChange={(event) => setFormData((previous) => ({ ...previous, currency: event.target.value }))}
+                voiceType="select"
+                voiceOptions={["UZS", "USD", "EUR", "RUB"].map((currency) => ({ value: currency, label: currency }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, currency: nextValue }))}
               >
                 {["UZS", "USD", "EUR", "RUB"].map((currency) => (
                   <MenuItem key={currency} value={currency}>
                     {currency}
                   </MenuItem>
                 ))}
-              </TextField>
+              </VoiceField>
               {formData.type === "EXPENSE_LIMIT" ? (
-                <TextField
+                <VoiceField
                   select
-                  label="Kategoriya"
+                  label={t("Kategoriya")}
                   value={formData.categoryId}
-                  onChange={(event) => setFormData((previous) => ({ ...previous, categoryId: event.target.value }))}
+                  voiceType="select"
+                  voiceOptions={expenseCategories.map((category) => ({
+                    value: String(category.id),
+                    label: categoryLabel(category.name, t)
+                  }))}
+                  onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, categoryId: nextValue }))}
                 >
-                  {expenseCategories.map((category) => (
-                    <MenuItem key={category.id} value={String(category.id)}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                    {expenseCategories.map((category) => (
+                      <MenuItem key={category.id} value={String(category.id)}>
+                        {categoryLabel(category.name, t)}
+                      </MenuItem>
+                    ))}
+                </VoiceField>
               ) : null}
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={closeDialog}>Bekor qilish</Button>
+            <Button onClick={closeDialog}>{t("Bekor qilish")}</Button>
             <Button type="submit" variant="contained" disabled={Boolean(busyAction)}>
-              Saqlash
+              {t("Saqlash")}
             </Button>
           </DialogActions>
         </Box>

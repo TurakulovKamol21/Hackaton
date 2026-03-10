@@ -19,10 +19,11 @@ import {
   Typography
 } from "@mui/material";
 import { Add, SwapHoriz } from "@mui/icons-material";
-import { format } from "date-fns";
 import { EmptyState, PageHeader, SectionCard } from "../components/ui-kit";
+import { VoiceField, VoiceFormNotice } from "../components/voice-input";
 import { useFinance } from "../finance/finance-context";
-import { formatMoney } from "../lib/finance-utils";
+import { useI18n } from "../i18n/i18n-context";
+import { formatDateValue, formatMoney } from "../lib/finance-utils";
 
 const initialTransfer = {
   fromAccountId: "",
@@ -36,6 +37,7 @@ const initialTransfer = {
 
 export default function TransfersPage() {
   const theme = useTheme();
+  const { t } = useI18n();
   const { accounts, transfers, selectedMonth, busyAction, createTransfer } = useFinance();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState(initialTransfer);
@@ -86,28 +88,28 @@ export default function TransfersPage() {
   return (
     <Box>
       <PageHeader
-        eyebrow="Transfers"
-        title="Ichki transferlar"
-        subtitle="Bir accountdan boshqasiga mablag‘ o‘tkazing, kerak bo‘lsa valyuta kursini bir vaqtda kiriting."
+        eyebrow={t("Transfers")}
+        title={t("Ichki transferlar")}
+        subtitle={t("Bir accountdan boshqasiga mablag‘ o‘tkazing, kerak bo‘lsa valyuta kursini bir vaqtda kiriting.")}
         action={
           <Button variant="contained" startIcon={<Add />} onClick={handleOpen}>
-            Transfer yaratish
+            {t("Transfer yaratish")}
           </Button>
         }
       />
 
-      <SectionCard title="Transfer logi" subtitle="Tanlangan oy bo‘yicha barcha ichki o‘tkazmalar.">
+      <SectionCard title={t("Transfer logi")} subtitle={t("Tanlangan oy bo‘yicha barcha ichki o‘tkazmalar.")}>
         {visibleTransfers.length ? (
           <TableContainer>
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Sana</TableCell>
-                  <TableCell>Qayerdan</TableCell>
-                  <TableCell align="center">Yo'nalish</TableCell>
-                  <TableCell>Qayerga</TableCell>
-                  <TableCell>Summa</TableCell>
-                  <TableCell>Izoh</TableCell>
+                  <TableCell>{t("Sana")}</TableCell>
+                  <TableCell>{t("Qayerdan")}</TableCell>
+                  <TableCell align="center">{t("Yo'nalish")}</TableCell>
+                  <TableCell>{t("Qayerga")}</TableCell>
+                  <TableCell>{t("Summa")}</TableCell>
+                  <TableCell>{t("Izoh")}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -121,7 +123,7 @@ export default function TransfersPage() {
                       }
                     }}
                   >
-                    <TableCell>{format(new Date(transfer.transferDate), "dd.MM.yyyy")}</TableCell>
+                    <TableCell>{formatDateValue(transfer.transferDate)}</TableCell>
                     <TableCell>
                       <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                         {transfer.fromAccountName}
@@ -142,12 +144,12 @@ export default function TransfersPage() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="subtitle2">{`Rate: ${transfer.rate}`}</Typography>
+                      <Typography variant="subtitle2">{t("Rate: {{value}}", { value: transfer.rate })}</Typography>
                       <Typography variant="body2" color="text.secondary">
                         {transfer.fromCurrency} → {transfer.toCurrency}
                       </Typography>
                     </TableCell>
-                    <TableCell>{transfer.note || "Izoh yo'q"}</TableCell>
+                    <TableCell>{transfer.note || t("Izoh yo'q")}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -155,91 +157,109 @@ export default function TransfersPage() {
           </TableContainer>
         ) : (
           <EmptyState
-            title="Transferlar hali yo'q"
-            message="Cross-account yoki cross-currency o'tkazma qilganingizdan so'ng, u shu jadvalda alohida ko‘rinadi."
+            title={t("Transferlar hali yo'q")}
+            message={t("Cross-account yoki cross-currency o'tkazma qilganingizdan so'ng, u shu jadvalda alohida ko‘rinadi.")}
           />
         )}
       </SectionCard>
 
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
         <Box component="form" onSubmit={handleSubmit}>
-          <DialogTitle>Yangi transfer</DialogTitle>
+          <DialogTitle>{t("Yangi transfer")}</DialogTitle>
           <DialogContent>
+            <VoiceFormNotice />
             <Stack spacing={2} sx={{ pt: 1 }}>
-              <TextField
+              <VoiceField
                 select
-                label="Qayerdan"
+                label={t("Qayerdan")}
                 value={formData.fromAccountId}
-                onChange={(event) => setFormData((previous) => ({ ...previous, fromAccountId: event.target.value }))}
+                voiceType="select"
+                voiceOptions={accounts.map((account) => ({
+                  value: String(account.id),
+                  label: account.name,
+                  aliases: [account.name]
+                }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, fromAccountId: nextValue }))}
               >
                 {accounts.map((account) => (
                   <MenuItem key={account.id} value={String(account.id)}>
                     {account.name} • {formatMoney(account.currentBalance, account.currency)}
                   </MenuItem>
                 ))}
-              </TextField>
-              <TextField
+              </VoiceField>
+              <VoiceField
                 select
-                label="Qayerga"
+                label={t("Qayerga")}
                 value={formData.toAccountId}
-                onChange={(event) => setFormData((previous) => ({ ...previous, toAccountId: event.target.value }))}
+                voiceType="select"
+                voiceOptions={accounts.map((account) => ({
+                  value: String(account.id),
+                  label: account.name,
+                  aliases: [account.name]
+                }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, toAccountId: nextValue }))}
               >
                 {accounts.map((account) => (
                   <MenuItem key={account.id} value={String(account.id)}>
                     {account.name} • {formatMoney(account.currentBalance, account.currency)}
                   </MenuItem>
                 ))}
-              </TextField>
-              <TextField
-                label="Jo'natiladigan summa"
+              </VoiceField>
+              <VoiceField
+                label={t("Jo'natiladigan summa")}
                 type="number"
+                voiceType="number"
                 value={formData.fromAmount}
-                onChange={(event) => setFormData((previous) => ({ ...previous, fromAmount: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, fromAmount: nextValue }))}
               />
               {sameCurrency ? (
                 <TextField
-                  label="Qabul qilinadigan summa"
+                  label={t("Qabul qilinadigan summa")}
                   value={formData.fromAmount}
                   disabled
-                  helperText="Bir xil valyuta uchun qabul qilinadigan summa jo'natilgan summaga teng."
+                  helperText={t("Bir xil valyuta uchun qabul qilinadigan summa jo'natilgan summaga teng.")}
                 />
               ) : (
                 <>
-                  <TextField
-                    label="Qabul qilinadigan summa"
+                  <VoiceField
+                    label={t("Qabul qilinadigan summa")}
                     type="number"
+                    voiceType="number"
                     value={formData.toAmount}
-                    onChange={(event) => setFormData((previous) => ({ ...previous, toAmount: event.target.value }))}
+                    onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, toAmount: nextValue }))}
                   />
-                  <TextField
-                    label="Valyuta kursi"
+                  <VoiceField
+                    label={t("Valyuta kursi")}
                     type="number"
+                    voiceType="number"
                     value={formData.rate}
-                    onChange={(event) => setFormData((previous) => ({ ...previous, rate: event.target.value }))}
-                    helperText={fromAccount && toAccount ? `${fromAccount.currency} → ${toAccount.currency}` : "Valyutani tanlang"}
+                    onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, rate: nextValue }))}
+                    helperText={fromAccount && toAccount ? `${fromAccount.currency} → ${toAccount.currency}` : t("Valyutani tanlang")}
                   />
                 </>
               )}
-              <TextField
+              <VoiceField
                 type="date"
-                label="Sana"
+                label={t("Sana")}
+                voiceType="date"
                 value={formData.transferDate}
-                onChange={(event) => setFormData((previous) => ({ ...previous, transferDate: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, transferDate: nextValue }))}
                 InputLabelProps={{ shrink: true }}
               />
-              <TextField
-                label="Izoh"
+              <VoiceField
+                label={t("Izoh")}
                 multiline
                 minRows={3}
+                voiceAppend
                 value={formData.note}
-                onChange={(event) => setFormData((previous) => ({ ...previous, note: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, note: nextValue }))}
               />
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={handleClose}>Bekor qilish</Button>
+            <Button onClick={handleClose}>{t("Bekor qilish")}</Button>
             <Button type="submit" variant="contained" disabled={Boolean(busyAction)}>
-              Saqlash
+              {t("Saqlash")}
             </Button>
           </DialogActions>
         </Box>

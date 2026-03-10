@@ -26,10 +26,11 @@ import {
   Typography
 } from "@mui/material";
 import { Add, DeleteOutline, EditOutlined, NorthEast, SouthWest } from "@mui/icons-material";
-import { format } from "date-fns";
 import { EmptyState, MetricCard, PageHeader, SectionCard } from "../components/ui-kit";
+import { VoiceField, VoiceFormNotice } from "../components/voice-input";
 import { useFinance } from "../finance/finance-context";
-import { formatMoney, sumNumeric } from "../lib/finance-utils";
+import { useI18n } from "../i18n/i18n-context";
+import { categoryLabel, formatDateValue, formatMoney, sumNumeric } from "../lib/finance-utils";
 
 const initialForm = {
   type: "EXPENSE",
@@ -43,6 +44,7 @@ const initialForm = {
 
 export default function TransactionsPage() {
   const theme = useTheme();
+  const { t } = useI18n();
   const {
     accounts,
     entries,
@@ -133,16 +135,16 @@ export default function TransactionsPage() {
   return (
     <Box>
       <PageHeader
-        eyebrow="Cashflow"
-        title="Tushum va xarajatlar"
-        subtitle="Barcha kirim-chiqimlarni bir formatda boshqaring: account, kategoriya va kundalik yozuvlar shu sahifada."
+        eyebrow={t("Cashflow")}
+        title={t("Tushum va xarajatlar")}
+        subtitle={t("Barcha kirim-chiqimlarni bir formatda boshqaring: account, kategoriya va kundalik yozuvlar shu sahifada.")}
         action={
           <Stack direction="row" spacing={1}>
             <Button color="error" variant="contained" startIcon={<Add />} onClick={() => openCreate("EXPENSE")}>
-              Xarajat
+              {t("Xarajat")}
             </Button>
             <Button color="success" variant="contained" startIcon={<Add />} onClick={() => openCreate("INCOME")}>
-              Tushum
+              {t("Tushum")}
             </Button>
           </Stack>
         }
@@ -157,31 +159,31 @@ export default function TransactionsPage() {
         }}
       >
         <MetricCard
-          title="Tanlangan oqim"
+          title={t("Tanlangan oqim")}
           value={formatMoney(totalVisible, visibleEntries[0]?.currency || accounts[0]?.currency || "UZS")}
-          caption={tab === "EXPENSE" ? "Aktiv tab bo‘yicha umumiy xarajat" : "Aktiv tab bo‘yicha umumiy tushum"}
+          caption={tab === "EXPENSE" ? t("Aktiv tab bo‘yicha umumiy xarajat") : t("Aktiv tab bo‘yicha umumiy tushum")}
           icon={tab === "EXPENSE" ? <SouthWest /> : <NorthEast />}
           accent={tab === "EXPENSE" ? theme.palette.error.main : theme.palette.success.main}
         />
         <MetricCard
-          title="Yozuvlar soni"
+          title={t("Yozuvlar soni")}
           value={String(visibleEntries.length)}
-          caption="Tanlangan oy kesimida bu turdagi tranzaksiyalar soni."
+          caption={t("Tanlangan oy kesimida bu turdagi tranzaksiyalar soni.")}
           icon={<Chip label={tab === "EXPENSE" ? "EXP" : "INC"} />}
           accent="#6d5efc"
         />
         <MetricCard
-          title="Asosiy account"
-          value={accounts[0]?.name || "Hisob yo'q"}
-          caption="Yangi yozuvlar uchun default sifatida birinchi account tanlanadi."
+          title={t("Asosiy account")}
+          value={accounts[0]?.name || t("Hisob yo'q")}
+          caption={t("Yangi yozuvlar uchun default sifatida birinchi account tanlanadi.")}
           icon={<Chip label={accounts[0]?.currency || "CUR"} />}
           accent="#0f9d88"
         />
       </Box>
 
       <SectionCard
-        title="Tranzaksiya registri"
-        subtitle="Edit va delete amallari shu jadvalda. Tab bo‘yicha darhol filterlanadi."
+        title={t("Tranzaksiya registri")}
+        subtitle={t("Edit va delete amallari shu jadvalda. Tab bo‘yicha darhol filterlanadi.")}
         action={
           <Tabs
             value={tab}
@@ -193,8 +195,8 @@ export default function TransactionsPage() {
               }
             }}
           >
-            <Tab value="EXPENSE" label="Xarajatlar" />
-            <Tab value="INCOME" label="Tushumlar" />
+            <Tab value="EXPENSE" label={t("Xarajatlar")} />
+            <Tab value="INCOME" label={t("Tushumlar")} />
           </Tabs>
         }
         padded={false}
@@ -203,12 +205,12 @@ export default function TransactionsPage() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Sana</TableCell>
-                <TableCell>Tavsif</TableCell>
-                <TableCell>Kategoriya</TableCell>
-                <TableCell>Hisob</TableCell>
-                <TableCell align="right">Summa</TableCell>
-                <TableCell align="right">Amallar</TableCell>
+                <TableCell>{t("Sana")}</TableCell>
+                <TableCell>{t("Tavsif")}</TableCell>
+                <TableCell>{t("Kategoriya")}</TableCell>
+                <TableCell>{t("Hisoblar")}</TableCell>
+                <TableCell align="right">{t("Summa")}</TableCell>
+                <TableCell align="right">{t("Amallar")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -223,18 +225,18 @@ export default function TransactionsPage() {
                       }
                     }}
                   >
-                    <TableCell>{format(new Date(entry.transactionDate), "dd.MM.yyyy")}</TableCell>
+                    <TableCell>{formatDateValue(entry.transactionDate)}</TableCell>
                     <TableCell>
                       <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                         {entry.title}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {entry.note || "Izoh berilmagan"}
+                        {entry.note || t("Izoh berilmagan")}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={entry.categoryName}
+                        label={categoryLabel(entry.categoryName, t)}
                         color={entry.type === "INCOME" ? "success" : "error"}
                         variant="outlined"
                       />
@@ -267,8 +269,8 @@ export default function TransactionsPage() {
                   <TableCell colSpan={6}>
                     <Box sx={{ p: 3 }}>
                       <EmptyState
-                        title="Tranzaksiya topilmadi"
-                        message="Bu tur uchun yozuvlar hali yo‘q. Yuqoridagi action tugmalaridan yangi income yoki expense yarating."
+                        title={t("Tranzaksiya topilmadi")}
+                        message={t("Bu tur uchun yozuvlar hali yo‘q. Yuqoridagi action tugmalaridan yangi income yoki expense yarating.")}
                       />
                     </Box>
                   </TableCell>
@@ -281,15 +283,20 @@ export default function TransactionsPage() {
 
       <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="sm">
         <Box component="form" onSubmit={handleSubmit}>
-          <DialogTitle>{editingId ? "Tranzaksiyani tahrirlash" : tab === "EXPENSE" ? "Yangi xarajat" : "Yangi tushum"}</DialogTitle>
+          <DialogTitle>{editingId ? t("Tranzaksiyani tahrirlash") : tab === "EXPENSE" ? t("Yangi xarajat") : t("Yangi tushum")}</DialogTitle>
           <DialogContent>
+            <VoiceFormNotice />
             <Stack spacing={2} sx={{ pt: 1 }}>
-              <TextField
+              <VoiceField
                 select
-                label="Turi"
+                label={t("Turi")}
                 value={formData.type}
-                onChange={(event) => {
-                  const nextType = event.target.value;
+                voiceType="select"
+                voiceOptions={[
+                  { value: "EXPENSE", label: t("Xarajat") },
+                  { value: "INCOME", label: t("Tushum") }
+                ]}
+                onValueChange={(nextType) => {
                   const nextCategories = nextType === "EXPENSE" ? expenseCategories : incomeCategories;
                   setTab(nextType);
                   setFormData((previous) => ({
@@ -299,64 +306,78 @@ export default function TransactionsPage() {
                   }));
                 }}
               >
-                <MenuItem value="EXPENSE">Xarajat</MenuItem>
-                <MenuItem value="INCOME">Tushum</MenuItem>
-              </TextField>
-              <TextField
-                label="Summa"
+                <MenuItem value="EXPENSE">{t("Xarajat")}</MenuItem>
+                <MenuItem value="INCOME">{t("Tushum")}</MenuItem>
+              </VoiceField>
+              <VoiceField
+                label={t("Summa")}
                 type="number"
+                voiceType="number"
                 value={formData.amount}
-                onChange={(event) => setFormData((previous) => ({ ...previous, amount: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, amount: nextValue }))}
               />
-              <TextField
+              <VoiceField
                 type="date"
-                label="Sana"
+                label={t("Sana")}
+                voiceType="date"
                 value={formData.transactionDate}
-                onChange={(event) => setFormData((previous) => ({ ...previous, transactionDate: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, transactionDate: nextValue }))}
                 InputLabelProps={{ shrink: true }}
               />
-              <TextField
-                label="Sarlavha"
+              <VoiceField
+                label={t("Sarlavha")}
                 value={formData.title}
-                onChange={(event) => setFormData((previous) => ({ ...previous, title: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, title: nextValue }))}
               />
-              <TextField
-                label="Izoh"
+              <VoiceField
+                label={t("Izoh")}
                 multiline
                 minRows={3}
+                voiceAppend
                 value={formData.note}
-                onChange={(event) => setFormData((previous) => ({ ...previous, note: event.target.value }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, note: nextValue }))}
               />
-              <TextField
+              <VoiceField
                 select
-                label="Kategoriya"
+                label={t("Kategoriya")}
                 value={formData.categoryId}
-                onChange={(event) => setFormData((previous) => ({ ...previous, categoryId: event.target.value }))}
+                voiceType="select"
+                voiceOptions={(formData.type === "EXPENSE" ? expenseCategories : incomeCategories).map((category) => ({
+                  value: String(category.id),
+                  label: categoryLabel(category.name, t)
+                }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, categoryId: nextValue }))}
               >
                 {(formData.type === "EXPENSE" ? expenseCategories : incomeCategories).map((category) => (
                   <MenuItem key={category.id} value={String(category.id)}>
-                    {category.name}
+                    {categoryLabel(category.name, t)}
                   </MenuItem>
                 ))}
-              </TextField>
-              <TextField
+              </VoiceField>
+              <VoiceField
                 select
-                label="Hisob"
+                label={t("Hisoblar")}
                 value={formData.accountId}
-                onChange={(event) => setFormData((previous) => ({ ...previous, accountId: event.target.value }))}
+                voiceType="select"
+                voiceOptions={accounts.map((account) => ({
+                  value: String(account.id),
+                  label: account.name,
+                  aliases: [account.name]
+                }))}
+                onValueChange={(nextValue) => setFormData((previous) => ({ ...previous, accountId: nextValue }))}
               >
                 {accounts.map((account) => (
                   <MenuItem key={account.id} value={String(account.id)}>
                     {account.name} • {formatMoney(account.currentBalance, account.currency)}
                   </MenuItem>
                 ))}
-              </TextField>
+              </VoiceField>
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={closeDialog}>Bekor qilish</Button>
+            <Button onClick={closeDialog}>{t("Bekor qilish")}</Button>
             <Button type="submit" variant="contained" disabled={Boolean(busyAction)}>
-              {editingId ? "Saqlash" : "Qo'shish"}
+              {editingId ? t("Saqlash") : t("Qo'shish")}
             </Button>
           </DialogActions>
         </Box>

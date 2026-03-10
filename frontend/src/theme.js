@@ -25,7 +25,7 @@ const baseTheme = createTheme({
       light: "#ffe9e7"
     },
     background: {
-      default: "#eef3fb",
+      default: "#f3f5fb",
       paper: "#ffffff"
     },
     text: {
@@ -35,7 +35,7 @@ const baseTheme = createTheme({
     divider: "#dbe3f0"
   },
   shape: {
-    borderRadius: 20
+    borderRadius: 6
   },
   typography: {
     fontFamily: '"Manrope", "Segoe UI", sans-serif',
@@ -81,7 +81,8 @@ export const appTheme = createTheme(baseTheme, {
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          background: "radial-gradient(circle at top left, #ffffff 0%, #eef3fb 48%, #e8eef8 100%)",
+          background:
+            "radial-gradient(circle at top left, rgba(255,255,255,1) 0%, rgba(243,245,251,1) 46%, rgba(233,238,248,1) 100%)",
           minHeight: "100vh"
         },
         "#root": {
@@ -93,10 +94,11 @@ export const appTheme = createTheme(baseTheme, {
       styleOverrides: {
         root: {
           backgroundImage: "none",
-          border: `1px solid ${alpha("#0f172a", 0.05)}`
+          border: `1px solid ${alpha("#0f172a", 0.06)}`,
+          boxShadow: `0 16px 40px ${alpha("#0f172a", 0.05)}`
         },
         rounded: {
-          borderRadius: 24
+          borderRadius: 20
         }
       }
     },
@@ -110,7 +112,7 @@ export const appTheme = createTheme(baseTheme, {
           paddingInline: 18
         },
         contained: {
-          boxShadow: `0 16px 34px ${alpha("#2457f5", 0.18)}`
+          boxShadow: `0 14px 30px ${alpha("#2457f5", 0.16)}`
         }
       }
     },
@@ -124,7 +126,7 @@ export const appTheme = createTheme(baseTheme, {
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 28,
+          borderRadius: 20,
           border: `1px solid ${alpha("#0f172a", 0.05)}`
         }
       }
@@ -132,15 +134,15 @@ export const appTheme = createTheme(baseTheme, {
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          backgroundColor: alpha("#ffffff", 0.88)
+          borderRadius: 14,
+          backgroundColor: alpha("#ffffff", 0.92)
         }
       }
     },
     MuiDialog: {
       styleOverrides: {
         paper: {
-          borderRadius: 28
+          borderRadius: 20
         }
       }
     },

@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.startup.finance.dto.FinanceDtos.CategoryResponse;
-import uz.startup.finance.model.Category;
+import uz.startup.finance.domain.entity.Category;
 import uz.startup.finance.repo.CategoryRepository;
 
 @Service

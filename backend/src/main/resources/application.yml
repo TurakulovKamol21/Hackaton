@@ -1,9 +1,11 @@
 spring:
+  config:
+    import: optional:file:../.env[.properties],optional:file:.env[.properties]
   datasource:
-    url: jdbc:h2:mem:finance;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/finance_app}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
   jpa:
     hibernate:
       ddl-auto: update
@@ -11,13 +13,15 @@ spring:
       hibernate:
         format_sql: true
     open-in-view: false
-  h2:
-    console:
-      enabled: true
 
 server:
   port: 8080
 
 app:
   cors:
-    allowed-origins: http://localhost:5173
+    allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:5173}
+  security:
+    frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+      client-secret: ${GOOGLE_CLIENT_SECRET:}

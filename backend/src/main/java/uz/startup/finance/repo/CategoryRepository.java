@@ -3,8 +3,8 @@ package uz.startup.finance.repo;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import uz.startup.finance.model.Category;
-import uz.startup.finance.model.TransactionType;
+import uz.startup.finance.domain.entity.Category;
+import uz.startup.finance.domain.enums.TransactionType;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 

@@ -17,6 +17,7 @@ body,
 
 body {
   min-width: 320px;
+  color: #111827;
 }
 
 a {
@@ -30,10 +31,14 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.28);
+  background: rgba(100, 116, 139, 0.22);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+::selection {
+  background: rgba(36, 87, 245, 0.14);
 }

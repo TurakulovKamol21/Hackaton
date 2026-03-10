@@ -1,4 +1,5 @@
 import { createContext, startTransition, useContext, useEffect, useState } from "react";
+import { useAuth } from "../auth/auth-context";
 import {
   categoriesByType,
   currentMonthValue,
@@ -19,6 +20,7 @@ function normalizeMonthValue(value) {
 }
 
 export function FinanceProvider({ children }) {
+  const { clearSession } = useAuth();
   const [accounts, setAccounts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [entries, setEntries] = useState([]);
@@ -76,6 +78,11 @@ export function FinanceProvider({ children }) {
           return;
         }
 
+        if (loadError.status === 401) {
+          clearSession();
+          return;
+        }
+
         const message = loadError.message || "Ma'lumotlarni yuklab bo'lmadi";
         setError(message);
         setToast({
@@ -123,6 +130,11 @@ export function FinanceProvider({ children }) {
       refresh();
       return result;
     } catch (mutationError) {
+      if (mutationError.status === 401) {
+        clearSession();
+        throw mutationError;
+      }
+
       const message = mutationError.message || "So'rov bajarilmadi";
       setError(message);
       setToast({

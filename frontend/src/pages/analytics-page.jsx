@@ -22,12 +22,14 @@ import {
 } from "recharts";
 import { EmptyState, PageHeader, SectionCard } from "../components/ui-kit";
 import { useFinance } from "../finance/finance-context";
-import { formatMoney } from "../lib/finance-utils";
+import { useI18n } from "../i18n/i18n-context";
+import { categoryLabel, formatMoney } from "../lib/finance-utils";
 
 const COLORS = ["#2457f5", "#0f9d88", "#f08c00", "#d92d20", "#7c3aed", "#2563eb", "#0ea5e9", "#22c55e"];
 
 export default function AnalyticsPage() {
   const theme = useTheme();
+  const { t } = useI18n();
   const { dashboard } = useFinance();
   const [currency, setCurrency] = useState("");
 
@@ -39,12 +41,12 @@ export default function AnalyticsPage() {
 
   const expenseStats = dashboard.categoryStats
     .filter((item) => item.type === "EXPENSE" && item.currency === activeCurrency)
-    .map((item) => ({ name: item.category, value: Number(item.total) }))
+    .map((item) => ({ name: categoryLabel(item.category, t), value: Number(item.total) }))
     .sort((left, right) => right.value - left.value);
 
   const incomeStats = dashboard.categoryStats
     .filter((item) => item.type === "INCOME" && item.currency === activeCurrency)
-    .map((item) => ({ name: item.category, value: Number(item.total) }))
+    .map((item) => ({ name: categoryLabel(item.category, t), value: Number(item.total) }))
     .sort((left, right) => right.value - left.value);
 
   const trendRows = dashboard.trends
@@ -65,15 +67,15 @@ export default function AnalyticsPage() {
   return (
     <Box>
       <PageHeader
-        eyebrow="Analytics"
-        title="Vizual tahlil paneli"
-        subtitle="Kategoriya kesimi, pul oqimi va net natijani grafiklar orqali ko‘ring."
+        eyebrow={t("Analytics")}
+        title={t("Vizual tahlil paneli")}
+        subtitle={t("Kategoriya kesimi, pul oqimi va net natijani grafiklar orqali ko‘ring.")}
         action={
           currencies.length ? (
             <TextField
               select
               size="small"
-              label="Valyuta"
+              label={t("Valyuta")}
               value={activeCurrency}
               onChange={(event) => setCurrency(event.target.value)}
               sx={{ minWidth: 140 }}
@@ -96,7 +98,7 @@ export default function AnalyticsPage() {
           mb: 2
         }}
       >
-        <SectionCard title="Cashflow compare" subtitle="Tushum va xarajatning period bo‘yicha taqqoslanishi.">
+        <SectionCard title={t("Cashflow compare")} subtitle={t("Tushum va xarajatning period bo‘yicha taqqoslanishi.")}>
           {trendRows.length ? (
             <Box sx={{ height: 340 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -106,20 +108,20 @@ export default function AnalyticsPage() {
                   <YAxis tickLine={false} axisLine={false} />
                   <Tooltip formatter={(value) => formatMoney(value, activeCurrency)} />
                   <Legend />
-                  <Bar dataKey="income" fill={theme.palette.success.main} radius={[10, 10, 0, 0]} name="Tushum" />
-                  <Bar dataKey="expense" fill={theme.palette.error.main} radius={[10, 10, 0, 0]} name="Xarajat" />
+                  <Bar dataKey="income" fill={theme.palette.success.main} radius={[10, 10, 0, 0]} name={t("Tushum")} />
+                  <Bar dataKey="expense" fill={theme.palette.error.main} radius={[10, 10, 0, 0]} name={t("Xarajat")} />
                 </BarChart>
               </ResponsiveContainer>
             </Box>
           ) : (
             <EmptyState
-              title="Trend ma'lumotlari yo'q"
-              message="Tanlangan currency bo‘yicha yetarli activity bo‘lmasa, grafik bo‘sh qoladi."
+              title={t("Trend ma'lumotlari yo'q")}
+              message={t("Tanlangan currency bo‘yicha yetarli activity bo‘lmasa, grafik bo‘sh qoladi.")}
             />
           )}
         </SectionCard>
 
-        <SectionCard title="Net story" subtitle="Period bo‘yicha sof natija.">
+        <SectionCard title={t("Net story")} subtitle={t("Period bo‘yicha sof natija.")}>
           {trendRows.length ? (
             <Stack spacing={1.25}>
               {trendRows.map((item) => (
@@ -151,7 +153,7 @@ export default function AnalyticsPage() {
               ))}
             </Stack>
           ) : (
-            <EmptyState title="Net story bo'sh" message="Grafik paydo bo‘lishi uchun shu oy activity kiritilishi kerak." />
+            <EmptyState title={t("Net story bo'sh")} message={t("Grafik paydo bo‘lishi uchun shu oy activity kiritilishi kerak.")} />
           )}
         </SectionCard>
       </Box>
@@ -163,7 +165,7 @@ export default function AnalyticsPage() {
           gap: 2
         }}
       >
-        <SectionCard title="Expense mix" subtitle="Xarajatlarning kategoriya bo‘yicha ulushi.">
+        <SectionCard title={t("Expense mix")} subtitle={t("Xarajatlarning kategoriya bo‘yicha ulushi.")}>
           {expenseStats.length ? (
             <Box sx={{ height: 320 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -188,11 +190,11 @@ export default function AnalyticsPage() {
               </ResponsiveContainer>
             </Box>
           ) : (
-            <EmptyState title="Expense breakdown yo'q" message="Expense kategoriyalari paydo bo‘lishi uchun tranzaksiya qo‘shing." />
+            <EmptyState title={t("Expense breakdown yo'q")} message={t("Expense kategoriyalari paydo bo‘lishi uchun tranzaksiya qo‘shing.")} />
           )}
         </SectionCard>
 
-        <SectionCard title="Income mix" subtitle="Daromad manbalari kesimida tarkib.">
+        <SectionCard title={t("Income mix")} subtitle={t("Daromad manbalari kesimida tarkib.")}>
           {incomeStats.length ? (
             <Box sx={{ height: 320 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -217,7 +219,7 @@ export default function AnalyticsPage() {
               </ResponsiveContainer>
             </Box>
           ) : (
-            <EmptyState title="Income breakdown yo'q" message="Income kategoriyalari paydo bo‘lishi uchun yozuv kiriting." />
+            <EmptyState title={t("Income breakdown yo'q")} message={t("Income kategoriyalari paydo bo‘lishi uchun yozuv kiriting.")} />
           )}
         </SectionCard>
       </Box>

@@ -7,12 +7,12 @@ import uz.startup.finance.dto.FinanceDtos.CategoryResponse;
 import uz.startup.finance.dto.FinanceDtos.DebtResponse;
 import uz.startup.finance.dto.FinanceDtos.EntryResponse;
 import uz.startup.finance.dto.FinanceDtos.TransferResponse;
-import uz.startup.finance.model.Account;
-import uz.startup.finance.model.Budget;
-import uz.startup.finance.model.Category;
-import uz.startup.finance.model.DebtRecord;
-import uz.startup.finance.model.Entry;
-import uz.startup.finance.model.Transfer;
+import uz.startup.finance.domain.entity.Account;
+import uz.startup.finance.domain.entity.Budget;
+import uz.startup.finance.domain.entity.Category;
+import uz.startup.finance.domain.entity.DebtRecord;
+import uz.startup.finance.domain.entity.Entry;
+import uz.startup.finance.domain.entity.Transfer;
 
 public final class FinanceMapper {
 

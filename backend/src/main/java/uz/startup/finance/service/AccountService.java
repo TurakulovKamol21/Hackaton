@@ -9,10 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.startup.finance.dto.FinanceDtos.AccountResponse;
 import uz.startup.finance.dto.FinanceDtos.CreateAccountRequest;
-import uz.startup.finance.model.Account;
+import uz.startup.finance.domain.entity.Account;
 import uz.startup.finance.repo.AccountRepository;
 import uz.startup.finance.repo.EntryRepository;
 import uz.startup.finance.repo.TransferRepository;
+import uz.startup.finance.security.CurrentUserService;
 
 @Service
 public class AccountService {
@@ -21,24 +22,27 @@ public class AccountService {
     private final BalanceService balanceService;
     private final EntryRepository entryRepository;
     private final TransferRepository transferRepository;
+    private final CurrentUserService currentUserService;
 
     public AccountService(
             AccountRepository accountRepository,
             BalanceService balanceService,
             EntryRepository entryRepository,
-            TransferRepository transferRepository
+            TransferRepository transferRepository,
+            CurrentUserService currentUserService
     ) {
         this.accountRepository = accountRepository;
         this.balanceService = balanceService;
         this.entryRepository = entryRepository;
         this.transferRepository = transferRepository;
+        this.currentUserService = currentUserService;
     }
 
     @Transactional(readOnly = true)
     public List<AccountResponse> listAccounts() {
+        Long ownerId = currentUserService.currentUserId();
         Map<Long, BigDecimal> balances = balanceService.currentBalances();
-        return accountRepository.findAll().stream()
-                .sorted(Comparator.comparing(Account::getName, String.CASE_INSENSITIVE_ORDER))
+        return accountRepository.findAllByOwnerIdOrderByNameAsc(ownerId).stream()
                 .map(account -> FinanceMapper.toAccountResponse(account, balances.getOrDefault(account.getId(), account.getInitialBalance())))
                 .toList();
     }
@@ -46,6 +50,7 @@ public class AccountService {
     @Transactional
     public AccountResponse createAccount(CreateAccountRequest request) {
         Account account = new Account();
+        account.setOwner(currentUserService.currentUser());
         applyAccountUpdate(account, request, false);
         Account saved = accountRepository.saveAndFlush(account);
         return FinanceMapper.toAccountResponse(saved, saved.getInitialBalance());
@@ -71,7 +76,8 @@ public class AccountService {
 
     @Transactional(readOnly = true)
     public Account requireAccount(Long id) {
-        return accountRepository.findById(id).orElseThrow(() -> new NotFoundException("Account not found: " + id));
+        return accountRepository.findByIdAndOwnerId(id, currentUserService.currentUserId())
+                .orElseThrow(() -> new NotFoundException("Account not found: " + id));
     }
 
     private void applyAccountUpdate(Account account, CreateAccountRequest request, boolean existingAccount) {
@@ -89,7 +95,9 @@ public class AccountService {
     }
 
     private boolean hasActivity(Long accountId) {
-        return entryRepository.existsByAccountId(accountId)
-                || transferRepository.existsByFromAccountIdOrToAccountId(accountId, accountId);
+        Long ownerId = currentUserService.currentUserId();
+        return entryRepository.existsByOwnerIdAndAccountId(ownerId, accountId)
+                || transferRepository.existsByOwnerIdAndFromAccountId(ownerId, accountId)
+                || transferRepository.existsByOwnerIdAndToAccountId(ownerId, accountId);
     }
 }

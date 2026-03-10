@@ -4,13 +4,16 @@ import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import uz.startup.finance.service.BadRequestException;
 import uz.startup.finance.service.NotFoundException;
+import uz.startup.finance.service.UnauthorizedException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -32,6 +35,19 @@ public class ApiExceptionHandler {
             message = exception.getMessage();
         }
         return buildResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler({UnauthorizedException.class, AuthenticationException.class})
+    public ResponseEntity<Map<String, Object>> handleUnauthorized(Exception exception) {
+        String message = exception.getMessage() == null || exception.getMessage().isBlank()
+                ? "Authentication required"
+                : exception.getMessage();
+        return buildResponse(HttpStatus.UNAUTHORIZED, message);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleForbidden(AccessDeniedException exception) {
+        return buildResponse(HttpStatus.FORBIDDEN, exception.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

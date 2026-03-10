@@ -6,11 +6,11 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import uz.startup.finance.model.AccountType;
-import uz.startup.finance.model.BudgetType;
-import uz.startup.finance.model.DebtStatus;
-import uz.startup.finance.model.DebtType;
-import uz.startup.finance.model.TransactionType;
+import uz.startup.finance.domain.enums.AccountType;
+import uz.startup.finance.domain.enums.BudgetType;
+import uz.startup.finance.domain.enums.DebtStatus;
+import uz.startup.finance.domain.enums.DebtType;
+import uz.startup.finance.domain.enums.TransactionType;
 
 public final class FinanceDtos {
 
@@ -190,6 +190,13 @@ public final class FinanceDtos {
     ) {
     }
 
+    public record InsightResponse(
+            String level,
+            String title,
+            String message
+    ) {
+    }
+
     public record DashboardResponse(
             String month,
             List<AccountResponse> accounts,
@@ -200,7 +207,8 @@ public final class FinanceDtos {
             List<CategoryStat> categoryStats,
             List<PeriodStat> trends,
             List<CalendarItem> calendarItems,
-            List<DebtSummary> debtSummaries
+            List<DebtSummary> debtSummaries,
+            List<InsightResponse> insights
     ) {
     }
 

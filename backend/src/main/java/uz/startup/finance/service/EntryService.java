@@ -7,10 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.startup.finance.dto.FinanceDtos.EntryResponse;
 import uz.startup.finance.dto.FinanceDtos.UpsertEntryRequest;
-import uz.startup.finance.model.Category;
-import uz.startup.finance.model.Entry;
-import uz.startup.finance.model.TransactionType;
+import uz.startup.finance.domain.entity.Category;
+import uz.startup.finance.domain.entity.Entry;
+import uz.startup.finance.domain.enums.TransactionType;
 import uz.startup.finance.repo.EntryRepository;
+import uz.startup.finance.security.CurrentUserService;
 
 @Service
 public class EntryService {
@@ -18,20 +19,23 @@ public class EntryService {
     private final EntryRepository entryRepository;
     private final CategoryService categoryService;
     private final AccountService accountService;
+    private final CurrentUserService currentUserService;
 
     public EntryService(
             EntryRepository entryRepository,
             CategoryService categoryService,
-            AccountService accountService
+            AccountService accountService,
+            CurrentUserService currentUserService
     ) {
         this.entryRepository = entryRepository;
         this.categoryService = categoryService;
         this.accountService = accountService;
+        this.currentUserService = currentUserService;
     }
 
     @Transactional(readOnly = true)
     public List<EntryResponse> listEntries(TransactionType type, LocalDate from, LocalDate to) {
-        return entryRepository.findAll().stream()
+        return entryRepository.findAllByOwnerIdOrderByTransactionDateDescIdDesc(currentUserService.currentUserId()).stream()
                 .filter(entry -> type == null || entry.getType() == type)
                 .filter(entry -> from == null || !entry.getTransactionDate().isBefore(from))
                 .filter(entry -> to == null || !entry.getTransactionDate().isAfter(to))
@@ -46,6 +50,7 @@ public class EntryService {
     public EntryResponse createEntry(UpsertEntryRequest request) {
         Category category = validateCategory(request);
         Entry entry = new Entry();
+        entry.setOwner(currentUserService.currentUser());
         entry.setType(request.type());
         entry.setAmount(request.amount());
         entry.setTransactionDate(request.transactionDate());
@@ -60,7 +65,8 @@ public class EntryService {
     @Transactional
     public EntryResponse updateEntry(Long id, UpsertEntryRequest request) {
         Category category = validateCategory(request);
-        Entry entry = entryRepository.findById(id).orElseThrow(() -> new NotFoundException("Entry not found: " + id));
+        Entry entry = entryRepository.findByIdAndOwnerId(id, currentUserService.currentUserId())
+                .orElseThrow(() -> new NotFoundException("Entry not found: " + id));
         entry.setType(request.type());
         entry.setAmount(request.amount());
         entry.setTransactionDate(request.transactionDate());
@@ -73,7 +79,8 @@ public class EntryService {
 
     @Transactional
     public void deleteEntry(Long id) {
-        Entry entry = entryRepository.findById(id).orElseThrow(() -> new NotFoundException("Entry not found: " + id));
+        Entry entry = entryRepository.findByIdAndOwnerId(id, currentUserService.currentUserId())
+                .orElseThrow(() -> new NotFoundException("Entry not found: " + id));
         entryRepository.delete(entry);
     }
 

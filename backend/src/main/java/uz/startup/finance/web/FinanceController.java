@@ -27,7 +27,7 @@ import uz.startup.finance.dto.FinanceDtos.TransferResponse;
 import uz.startup.finance.dto.FinanceDtos.UpsertBudgetRequest;
 import uz.startup.finance.dto.FinanceDtos.UpsertDebtRequest;
 import uz.startup.finance.dto.FinanceDtos.UpsertEntryRequest;
-import uz.startup.finance.model.TransactionType;
+import uz.startup.finance.domain.enums.TransactionType;
 import uz.startup.finance.service.AccountService;
 import uz.startup.finance.service.BudgetService;
 import uz.startup.finance.service.CategoryService;

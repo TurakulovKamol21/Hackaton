@@ -8,26 +8,33 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.startup.finance.dto.FinanceDtos.BudgetResponse;
 import uz.startup.finance.dto.FinanceDtos.UpsertBudgetRequest;
-import uz.startup.finance.model.Budget;
-import uz.startup.finance.model.BudgetType;
-import uz.startup.finance.model.Category;
-import uz.startup.finance.model.TransactionType;
+import uz.startup.finance.domain.entity.Budget;
+import uz.startup.finance.domain.enums.BudgetType;
+import uz.startup.finance.domain.entity.Category;
+import uz.startup.finance.domain.enums.TransactionType;
 import uz.startup.finance.repo.BudgetRepository;
+import uz.startup.finance.security.CurrentUserService;
 
 @Service
 public class BudgetService {
 
     private final BudgetRepository budgetRepository;
     private final CategoryService categoryService;
+    private final CurrentUserService currentUserService;
 
-    public BudgetService(BudgetRepository budgetRepository, CategoryService categoryService) {
+    public BudgetService(
+            BudgetRepository budgetRepository,
+            CategoryService categoryService,
+            CurrentUserService currentUserService
+    ) {
         this.budgetRepository = budgetRepository;
         this.categoryService = categoryService;
+        this.currentUserService = currentUserService;
     }
 
     @Transactional(readOnly = true)
     public List<BudgetResponse> listBudgets(String month) {
-        return budgetRepository.findByMonthOrderByTypeAscIdAsc(month).stream()
+        return budgetRepository.findByOwnerIdAndMonthOrderByTypeAscIdAsc(currentUserService.currentUserId(), month).stream()
                 .sorted(Comparator.comparing(budget -> budget.getType().name()))
                 .map(FinanceMapper::toBudgetResponse)
                 .toList();
@@ -36,7 +43,7 @@ public class BudgetService {
     @Transactional
     public BudgetResponse saveBudget(UpsertBudgetRequest request) {
         Category category = validateRequest(request);
-        Budget budget = budgetRepository.findByMonthOrderByTypeAscIdAsc(request.month()).stream()
+        Budget budget = budgetRepository.findByOwnerIdAndMonthOrderByTypeAscIdAsc(currentUserService.currentUserId(), request.month()).stream()
                 .filter(candidate -> candidate.getType() == request.type())
                 .filter(candidate -> Objects.equals(
                         candidate.getCategory() == null ? null : candidate.getCategory().getId(),
@@ -45,6 +52,9 @@ public class BudgetService {
                 .findFirst()
                 .orElseGet(Budget::new);
 
+        if (budget.getOwner() == null) {
+            budget.setOwner(currentUserService.currentUser());
+        }
         budget.setMonth(request.month());
         budget.setType(request.type());
         budget.setAmount(request.amount());
@@ -56,7 +66,7 @@ public class BudgetService {
 
     @Transactional
     public void deleteBudget(Long id) {
-        Budget budget = budgetRepository.findById(id)
+        Budget budget = budgetRepository.findByIdAndOwnerId(id, currentUserService.currentUserId())
                 .orElseThrow(() -> new NotFoundException("Budget not found: " + id));
         budgetRepository.delete(budget);
     }
