@@ -3,7 +3,8 @@ import { enUS, ru, uz } from "date-fns/locale";
 import { DEFAULT_LANGUAGE, LANGUAGE_STORAGE_KEY, languageOptions } from "../i18n/translations";
 
 export const currentMonthValue = new Date().toISOString().slice(0, 7);
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080").replace(/\/$/, "");
+const defaultApiBaseUrl = import.meta.env.PROD ? "" : "http://localhost:8080";
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || defaultApiBaseUrl).replace(/\/$/, "");
 
 const dateLocaleMap = {
   uz,

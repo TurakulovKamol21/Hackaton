@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import uz.startup.finance.security.GoogleOAuth2UserService;
+import uz.startup.finance.security.GoogleOidcUserService;
 import uz.startup.finance.security.OAuth2AuthenticationFailureHandler;
 import uz.startup.finance.security.OAuth2AuthenticationSuccessHandler;
 
@@ -33,6 +34,7 @@ public class SecurityConfig {
             ObjectMapper objectMapper,
             ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider,
             GoogleOAuth2UserService googleOAuth2UserService,
+            GoogleOidcUserService googleOidcUserService,
             OAuth2AuthenticationSuccessHandler successHandler,
             OAuth2AuthenticationFailureHandler failureHandler
     ) throws Exception {
@@ -73,7 +75,10 @@ public class SecurityConfig {
 
         if (clientRegistrationRepositoryProvider.getIfAvailable() != null) {
             http.oauth2Login(oauth -> oauth
-                    .userInfoEndpoint(userInfo -> userInfo.userService(googleOAuth2UserService))
+                    .userInfoEndpoint(userInfo -> userInfo
+                            .userService(googleOAuth2UserService)
+                            .oidcUserService(googleOidcUserService)
+                    )
                     .successHandler(successHandler)
                     .failureHandler(failureHandler)
             );

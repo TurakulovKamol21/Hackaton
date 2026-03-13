@@ -13,25 +13,37 @@ export default function OAuthCallbackPage() {
   useEffect(() => {
     let active = true;
 
-    refreshSession()
-      .then((payload) => {
-        if (!active) {
-          return;
+    const verifySession = async () => {
+      try {
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+          const payload = await refreshSession();
+
+          if (!active) {
+            return;
+          }
+
+          if (payload?.authenticated) {
+            navigate("/overview", { replace: true });
+            return;
+          }
+
+          await new Promise((resolve) => {
+            window.setTimeout(resolve, 350);
+          });
         }
 
-        if (payload?.authenticated) {
-          navigate("/overview", { replace: true });
-          return;
+        if (active) {
+          navigate("/auth/login", { replace: true });
         }
-
-        navigate("/auth/login", { replace: true });
-      })
-      .catch((callbackError) => {
+      } catch (callbackError) {
         if (!active) {
           return;
         }
         setError(callbackError.message || t("Google loginni yakunlab bo‘lmadi"));
-      });
+      }
+    };
+
+    verifySession();
 
     return () => {
       active = false;

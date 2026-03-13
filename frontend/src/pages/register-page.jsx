@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Link, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Divider, Link, Stack, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/auth-context";
@@ -8,7 +8,7 @@ import { useI18n } from "../i18n/i18n-context";
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
-  const { register, busyAction } = useAuth();
+  const { register, googleEnabled, googleLoginUrl, busyAction } = useAuth();
   const [form, setForm] = useState({
     fullName: "",
     phoneNumber: "",
@@ -38,8 +38,8 @@ export default function RegisterPage() {
     <AuthShell
       eyebrow={t("Profil yaratish")}
       title={t("Yangi foydalanuvchi profili bilan boshlang")}
-      subtitle={t("Telefon raqam, parol va confirm password orqali yangi profil yarating. Ro‘yxatdan o‘tgach, session avtomatik ochiladi.")}
-      footer={t("Har bir user uchun accountlar, entrylar, transferlar va dashboard ma’lumotlari alohida scope’da saqlanadi.")}
+      subtitle={t("Telefon raqam va parol bilan ro‘yxatdan o‘ting yoki Google bilan bir bosishda davom eting. Google birinchi kirishda profilingizni avtomatik yaratadi.")}
+      footer={t("Telefon raqamli register alohida qoladi, Google auth esa login va register’ni bitta oqimda bajaradi.")}
     >
       <Stack spacing={3}>
         <Box>
@@ -93,6 +93,26 @@ export default function RegisterPage() {
             </Button>
           </Stack>
         </Box>
+
+        <Divider>{t("yoki")}</Divider>
+
+        <Stack spacing={1.5}>
+          <Button
+            variant="outlined"
+            size="large"
+            disabled={!googleEnabled}
+            onClick={() => {
+              window.location.href = googleLoginUrl;
+            }}
+          >
+            {googleEnabled ? t("Google bilan davom etish") : t("Google auth sozlanmagan")}
+          </Button>
+          {!googleEnabled ? (
+            <Typography variant="caption" color="text.secondary">
+              {t("Google auth uchun backendda GOOGLE_CLIENT_ID va GOOGLE_CLIENT_SECRET o‘rnatilishi kerak.")}
+            </Typography>
+          ) : null}
+        </Stack>
 
         <Typography variant="body2" color="text.secondary">
           {t("Akkauntingiz bormi?")}{" "}

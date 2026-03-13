@@ -14,7 +14,7 @@ export default function LoginPage() {
     phoneNumber: "",
     password: ""
   });
-  const [error, setError] = useState(searchParams.get("error") === "google_auth_failed" ? t("Google login yakunlanmadi") : "");
+  const [error, setError] = useState(searchParams.get("error") === "google_auth_failed" ? t("Google orqali davom etish yakunlanmadi") : "");
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -32,8 +32,8 @@ export default function LoginPage() {
     <AuthShell
       eyebrow={t("Xavfsiz kirish")}
       title={t("Moliyaviy profilingizga xavfsiz kiring")}
-      subtitle={t("Telefon raqam orqali login qiling yoki Google orqali session oching. Har bir foydalanuvchi faqat o‘zining ma’lumotlarini ko‘radi.")}
-      footer={t("Hackathon demo uchun register oqimidan o‘tib yangi user yaratish yoki mavjud session bilan kirish mumkin.")}
+      subtitle={t("Telefon raqam orqali kiring yoki Google bilan davom eting. Google birinchi kirishda profilingizni avtomatik yaratadi, keyin esa to‘g‘ridan-to‘g‘ri login qiladi.")}
+      footer={t("Google auth bu yerda login va register’ni bitta oqimga birlashtiradi. Telefon raqam va parol orqali esa alohida register qilish mumkin.")}
     >
       <Stack spacing={3}>
         <Box>
@@ -82,11 +82,11 @@ export default function LoginPage() {
               window.location.href = googleLoginUrl;
             }}
           >
-            {googleEnabled ? t("Google orqali kirish") : t("Google login sozlanmagan")}
+            {googleEnabled ? t("Google bilan davom etish") : t("Google auth sozlanmagan")}
           </Button>
           {!googleEnabled ? (
             <Typography variant="caption" color="text.secondary">
-              {t("Google login uchun backendda GOOGLE_CLIENT_ID va GOOGLE_CLIENT_SECRET o‘rnatilishi kerak.")}
+              {t("Google auth uchun backendda GOOGLE_CLIENT_ID va GOOGLE_CLIENT_SECRET o‘rnatilishi kerak.")}
             </Typography>
           ) : null}
         </Stack>

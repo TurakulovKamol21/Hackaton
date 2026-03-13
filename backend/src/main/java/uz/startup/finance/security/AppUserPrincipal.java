@@ -8,10 +8,13 @@ import java.util.Map;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import uz.startup.finance.domain.entity.UserAccount;
 
-public class AppUserPrincipal implements UserDetails, OAuth2User, Serializable {
+public class AppUserPrincipal implements UserDetails, OAuth2User, OidcUser, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -22,6 +25,8 @@ public class AppUserPrincipal implements UserDetails, OAuth2User, Serializable {
     private final String displayName;
     private final Collection<? extends GrantedAuthority> authorities;
     private final Map<String, Object> attributes;
+    private final OidcIdToken idToken;
+    private final OidcUserInfo userInfo;
 
     public AppUserPrincipal(
             Long userId,
@@ -29,7 +34,9 @@ public class AppUserPrincipal implements UserDetails, OAuth2User, Serializable {
             String password,
             String displayName,
             Collection<? extends GrantedAuthority> authorities,
-            Map<String, Object> attributes
+            Map<String, Object> attributes,
+            OidcIdToken idToken,
+            OidcUserInfo userInfo
     ) {
         this.userId = userId;
         this.username = username;
@@ -37,13 +44,28 @@ public class AppUserPrincipal implements UserDetails, OAuth2User, Serializable {
         this.displayName = displayName;
         this.authorities = authorities;
         this.attributes = attributes == null ? Map.of() : Map.copyOf(attributes);
+        this.idToken = idToken;
+        this.userInfo = userInfo;
     }
 
     public static AppUserPrincipal from(UserAccount user) {
-        return from(user, Map.of());
+        return from(user, Map.of(), null, null);
     }
 
     public static AppUserPrincipal from(UserAccount user, Map<String, Object> attributes) {
+        return from(user, attributes, null, null);
+    }
+
+    public static AppUserPrincipal from(UserAccount user, OidcUser oidcUser) {
+        return from(user, oidcUser.getAttributes(), oidcUser.getIdToken(), oidcUser.getUserInfo());
+    }
+
+    public static AppUserPrincipal from(
+            UserAccount user,
+            Map<String, Object> attributes,
+            OidcIdToken idToken,
+            OidcUserInfo userInfo
+    ) {
         String username = user.getPhoneNumber() != null ? user.getPhoneNumber()
                 : user.getEmail() != null ? user.getEmail()
                 : String.valueOf(user.getId());
@@ -53,7 +75,9 @@ public class AppUserPrincipal implements UserDetails, OAuth2User, Serializable {
                 user.getPasswordHash(),
                 user.getFullName(),
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())),
-                attributes
+                attributes,
+                idToken,
+                userInfo
         );
     }
 
@@ -71,8 +95,23 @@ public class AppUserPrincipal implements UserDetails, OAuth2User, Serializable {
     }
 
     @Override
+    public Map<String, Object> getClaims() {
+        return attributes;
+    }
+
+    @Override
     public String getName() {
         return String.valueOf(userId);
+    }
+
+    @Override
+    public OidcUserInfo getUserInfo() {
+        return userInfo;
+    }
+
+    @Override
+    public OidcIdToken getIdToken() {
+        return idToken;
     }
 
     @Override
